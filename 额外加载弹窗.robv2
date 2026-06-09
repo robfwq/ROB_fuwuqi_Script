@@ -1,0 +1,146 @@
+local player = game:GetService("Players").LocalPlayer
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local gui = Instance.new("ScreenGui")
+gui.Name = "ExtraLoadPrompt"
+gui.ResetOnSpawn = false
+gui.ZIndexBehavior = Enum.ZIndexBehavior.Global
+gui.DisplayOrder = 999999
+gui.IgnoreGuiInset = true
+gui.Parent = player:WaitForChild("PlayerGui")
+
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0, 220, 0, 120)
+frame.AnchorPoint = Vector2.new(0.5, 0.5)
+frame.Position = UDim2.new(0.5, 60, 0.5, -40)
+frame.BackgroundColor3 = Color3.fromRGB(0, 100, 200)
+frame.BackgroundTransparency = 0.5
+frame.BorderSizePixel = 0
+frame.Parent = gui
+
+local border = Instance.new("UIStroke")
+border.Color = Color3.fromRGB(255, 0, 0)
+border.Thickness = 2
+border.Parent = frame
+
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0, 2)
+corner.Parent = frame
+
+local mainText = Instance.new("TextLabel")
+mainText.Size = UDim2.new(1, -10, 0, 34)
+mainText.Position = UDim2.new(0, 5, 0, 20)
+mainText.BackgroundTransparency = 1
+mainText.Text = "是否额外加载ROB通用脚本？"
+mainText.TextColor3 = Color3.new(1, 1, 1)
+mainText.TextSize = 16
+mainText.Font = Enum.Font.GothamBold
+mainText.TextWrapped = true
+mainText.Parent = frame
+
+local countdownText = Instance.new("TextLabel")
+countdownText.Size = UDim2.new(1, -10, 0, 26)
+countdownText.Position = UDim2.new(0, 5, 0, 56)
+countdownText.BackgroundTransparency = 1
+countdownText.Text = "5.00 秒后弹窗消失"
+countdownText.TextColor3 = Color3.new(1, 1, 0)
+countdownText.TextSize = 18
+countdownText.Font = Enum.Font.GothamBold
+countdownText.Parent = frame
+
+local buttonContainer = Instance.new("Frame")
+buttonContainer.Size = UDim2.new(1, -10, 0, 30)
+buttonContainer.Position = UDim2.new(0, 5, 0, 84)
+buttonContainer.BackgroundTransparency = 1
+buttonContainer.Parent = frame
+
+local loadBtn = Instance.new("TextButton")
+loadBtn.Size = UDim2.new(0.4, -5, 1, 0)
+loadBtn.Position = UDim2.new(0, 0, 0, 0)
+loadBtn.BackgroundColor3 = Color3.fromRGB(60, 180, 60)
+loadBtn.BackgroundTransparency = 0.3
+loadBtn.Text = "加载"
+loadBtn.TextColor3 = Color3.new(1, 1, 1)
+loadBtn.TextSize = 15
+loadBtn.Font = Enum.Font.GothamBold
+loadBtn.Parent = buttonContainer
+local loadCorner = Instance.new("UICorner")
+loadCorner.CornerRadius = UDim.new(0, 2)
+loadCorner.Parent = loadBtn
+
+local noBtn = Instance.new("TextButton")
+noBtn.Size = UDim2.new(0.4, -5, 1, 0)
+noBtn.Position = UDim2.new(0.6, 0, 0, 0)
+noBtn.BackgroundColor3 = Color3.fromRGB(200, 60, 60)
+noBtn.BackgroundTransparency = 0.3
+noBtn.Text = "不加载"
+noBtn.TextColor3 = Color3.new(1, 1, 1)
+noBtn.TextSize = 15
+noBtn.Font = Enum.Font.GothamBold
+noBtn.Parent = buttonContainer
+local noCorner = Instance.new("UICorner")
+noCorner.CornerRadius = UDim.new(0, 2)
+noCorner.Parent = noBtn
+
+local dragging = false
+local dragStart = nil
+local frameStart = nil
+local activeTouch = nil
+
+frame.InputBegan:Connect(function(input)
+    if (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) and not dragging then
+        dragging = true
+        activeTouch = input
+        dragStart = input.Position
+        frameStart = frame.Position
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if dragging and input == activeTouch and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+        local delta = input.Position - dragStart
+        frame.Position = UDim2.new(frameStart.X.Scale, frameStart.X.Offset + delta.X,
+                                   frameStart.Y.Scale, frameStart.Y.Offset + delta.Y)
+    end
+end)
+
+UserInputService.InputEnded:Connect(function(input)
+    if dragging and input == activeTouch then
+        dragging = false
+        activeTouch = nil
+    end
+end)
+
+local remaining = 5.0
+local function updateCountdown(delta)
+    remaining = remaining - delta
+    if remaining <= 0 then
+        gui:Destroy()
+        return true
+    end
+    countdownText.Text = string.format("%.2f 秒后弹窗消失", remaining)
+    return false
+end
+
+local lastTime = tick()
+local connection
+connection = RunService.Heartbeat:Connect(function()
+    local now = tick()
+    local delta = math.min(0.1, now - lastTime)
+    lastTime = now
+    local finished = updateCountdown(delta)
+    if finished then
+        connection:Disconnect()
+    end
+end)
+
+loadBtn.MouseButton1Click:Connect(function()
+    if connection then connection:Disconnect() end
+    gui:Destroy()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/Zyb150933/ROB/refs/heads/main/ROB.V2"))()
+end)
+
+noBtn.MouseButton1Click:Connect(function()
+    if connection then connection:Disconnect() end
+    gui:Destroy()
+end)
