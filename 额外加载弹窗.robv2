@@ -137,7 +137,7 @@ end)
 loadBtn.MouseButton1Click:Connect(function()
     if connection then connection:Disconnect() end
     gui:Destroy()
-    loadstring(game:HttpGet("https://raw.githubusercontent.com/Zyb150933/ROB/refs/heads/main/ROB.V2"))()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/mituosir/Yinca/refs/heads/main/mituoxi.gn"))()
 end)
 
 noBtn.MouseButton1Click:Connect(function()
